@@ -1,65 +1,206 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>myst3k</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&display=swap');
 
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    <title>myst3k.github.io by myst3k</title>
-  </head>
+  body {
+    background: #0a0a0f;
+    color: #e0e0e0;
+    font-family: 'JetBrains Mono', monospace;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-  <body>
+  canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    opacity: 0.15;
+  }
 
-    <header>
-      <div class="container">
-        <h1>myst3k.github.io</h1>
-        <h2>my github pages</h2>
+  .container {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2rem;
+  }
 
-        <section id="downloads">
-          <a href="https://github.com/myst3k" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
-        </section>
-      </div>
-    </header>
+  .handle {
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    background: linear-gradient(135deg, #00ff88, #00bbff, #8855ff);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-shift 8s ease infinite;
+    user-select: none;
+  }
 
-    <div class="container">
-      <section id="main_content">
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+  .cursor {
+    display: inline-block;
+    width: 3px;
+    height: 1em;
+    background: #00ff88;
+    margin-left: 4px;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+  .subtitle {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 300;
+    color: #444;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fade-in 2s ease 1.5s forwards;
+  }
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+  .links {
+    margin-top: 2.5rem;
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    opacity: 0;
+    animation: fade-in 2s ease 2.5s forwards;
+  }
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+  .links a {
+    color: #333;
+    text-decoration: none;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    transition: color 0.3s ease;
+  }
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+  .links a:hover {
+    color: #00ff88;
+  }
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+  .coord {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 2rem;
+    font-size: 0.6rem;
+    color: #1a1a2e;
+    letter-spacing: 0.1em;
+    z-index: 1;
+  }
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
 
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+  @keyframes fade-in {
+    to { opacity: 1; }
+  }
+</style>
+</head>
+<body>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<canvas id="grid"></canvas>
 
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+<div class="container">
+  <div class="handle" id="typed"></div>
+  <div class="subtitle">building things in the dark</div>
+  <div class="links">
+    <a href="https://github.com/myst3k">github</a>
+  </div>
+</div>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
-      </section>
-    </div>
+<div class="coord" id="coord">25.7617° N, 80.1918° W</div>
 
-    
-  </body>
+<script>
+// Typing effect
+const text = 'myst3k';
+const el = document.getElementById('typed');
+let i = 0;
+
+function type() {
+  if (i <= text.length) {
+    el.innerHTML = text.slice(0, i) + '<span class="cursor"></span>';
+    i++;
+    setTimeout(type, 120 + Math.random() * 80);
+  }
+}
+
+setTimeout(type, 500);
+
+// Grid background
+const canvas = document.getElementById('grid');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+resize();
+window.addEventListener('resize', resize);
+
+const dots = [];
+const spacing = 30;
+
+function initDots() {
+  dots.length = 0;
+  for (let x = 0; x < canvas.width; x += spacing) {
+    for (let y = 0; y < canvas.height; y += spacing) {
+      dots.push({ x, y, baseAlpha: Math.random() * 0.3 + 0.1 });
+    }
+  }
+}
+
+initDots();
+window.addEventListener('resize', initDots);
+
+let mouse = { x: -1000, y: -1000 };
+document.addEventListener('mousemove', e => {
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (const dot of dots) {
+    const dx = mouse.x - dot.x;
+    const dy = mouse.y - dot.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const influence = Math.max(0, 1 - dist / 200);
+
+    const r = 0;
+    const g = Math.floor(255 * influence);
+    const b = Math.floor(136 * influence);
+    const alpha = dot.baseAlpha + influence * 0.7;
+
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    ctx.fillRect(dot.x - 1, dot.y - 1, 2, 2);
+  }
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+
+</body>
 </html>
