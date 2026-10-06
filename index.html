@@ -4,20 +4,32 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>myst3k</title>
+<meta name="description" content="myst3k — building things in the dark.">
+<meta name="theme-color" content="#0a0a0f">
+<meta property="og:title" content="myst3k">
+<meta property="og:description" content="building things in the dark">
+<meta property="og:url" content="https://myst3k.github.io/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0a0f'/%3E%3Cpath d='M8 10l6 6-6 6' stroke='%2300ff88' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='16' y='20' width='9' height='3' rx='1' fill='%2300bbff'/%3E%3C/svg%3E">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&display=swap');
+  @font-face { font-family: 'JetBrains Mono'; font-weight: 300; font-display: swap; src: url('fonts/jetbrains-mono-300.woff2') format('woff2'); }
+  @font-face { font-family: 'JetBrains Mono'; font-weight: 400; font-display: swap; src: url('fonts/jetbrains-mono-400.woff2') format('woff2'); }
+  @font-face { font-family: 'JetBrains Mono'; font-weight: 700; font-display: swap; src: url('fonts/jetbrains-mono-700.woff2') format('woff2'); }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
     background: #0a0a0f;
     color: #e0e0e0;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
+    touch-action: manipulation;
   }
 
   canvas {
@@ -25,7 +37,6 @@
     top: 0;
     left: 0;
     z-index: 0;
-    opacity: 0.15;
   }
 
   .container {
@@ -33,6 +44,7 @@
     z-index: 1;
     text-align: center;
     padding: 2rem;
+    pointer-events: none;
   }
 
   .handle {
@@ -46,6 +58,7 @@
     background-clip: text;
     animation: gradient-shift 8s ease infinite;
     user-select: none;
+    min-height: 1.2em;
   }
 
   .cursor {
@@ -62,7 +75,7 @@
     margin-top: 1.5rem;
     font-size: 0.85rem;
     font-weight: 300;
-    color: #444;
+    color: #7a7f8c;
     letter-spacing: 0.3em;
     text-transform: uppercase;
     opacity: 0;
@@ -79,16 +92,21 @@
   }
 
   .links a {
-    color: #333;
+    pointer-events: auto;
+    color: #8a8f9c;
     text-decoration: none;
     font-size: 0.75rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    transition: color 0.3s ease;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid transparent;
+    transition: color 0.3s ease, border-color 0.3s ease;
   }
 
-  .links a:hover {
+  .links a:hover, .links a:focus-visible {
     color: #00ff88;
+    border-color: #00ff88;
+    outline: none;
   }
 
   .coord {
@@ -96,7 +114,7 @@
     bottom: 1.5rem;
     right: 2rem;
     font-size: 0.6rem;
-    color: #1a1a2e;
+    color: #3a3f55;
     letter-spacing: 0.1em;
     z-index: 1;
   }
@@ -113,6 +131,11 @@
   @keyframes fade-in {
     to { opacity: 1; }
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    .handle, .cursor { animation: none; }
+    .subtitle, .links { animation: none; opacity: 1; }
+  }
 </style>
 </head>
 <body>
@@ -122,84 +145,127 @@
 <div class="container">
   <div class="handle" id="typed"></div>
   <div class="subtitle">building things in the dark</div>
-  <div class="links">
+  <nav class="links">
     <a href="https://github.com/myst3k">github</a>
-  </div>
+  </nav>
 </div>
 
 <div class="coord" id="coord">25.7617° N, 80.1918° W</div>
 
 <script>
-// Typing effect
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Decode effect
 const text = 'myst3k';
+const glyphs = '!<>-_\\/[]{}=+*^?#01';
 const el = document.getElementById('typed');
-let i = 0;
+const cursor = '<span class="cursor"></span>';
 
-function type() {
-  if (i <= text.length) {
-    el.innerHTML = text.slice(0, i) + '<span class="cursor"></span>';
-    i++;
-    setTimeout(type, 120 + Math.random() * 80);
-  }
+if (reduced) {
+  el.innerHTML = text + cursor;
+} else {
+  const resolveAt = [...text].map((_, i) => 10 + i * 7 + Math.floor(Math.random() * 8));
+  let frame = 0;
+  (function decode() {
+    let out = '';
+    for (let i = 0; i < text.length; i++) {
+      if (frame >= resolveAt[i]) out += text[i];
+      else if (frame >= i * 3) out += glyphs[Math.floor(Math.random() * glyphs.length)];
+    }
+    el.innerHTML = out + cursor;
+    if (frame++ < resolveAt[resolveAt.length - 1]) setTimeout(decode, 40);
+  })();
 }
-
-setTimeout(type, 500);
 
 // Grid background
 const canvas = document.getElementById('grid');
 const ctx = canvas.getContext('2d');
+const spacing = 30;
+const dots = [];
+let w = 0, h = 0;
 
 function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  w = window.innerWidth;
+  h = window.innerHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-resize();
-window.addEventListener('resize', resize);
-
-const dots = [];
-const spacing = 30;
-
-function initDots() {
   dots.length = 0;
-  for (let x = 0; x < canvas.width; x += spacing) {
-    for (let y = 0; y < canvas.height; y += spacing) {
+  for (let x = spacing / 2; x < w; x += spacing) {
+    for (let y = spacing / 2; y < h; y += spacing) {
       dots.push({ x, y, baseAlpha: Math.random() * 0.3 + 0.1 });
     }
   }
 }
 
-initDots();
-window.addEventListener('resize', initDots);
+resize();
+window.addEventListener('resize', resize);
 
-let mouse = { x: -1000, y: -1000 };
-document.addEventListener('mousemove', e => {
-  mouse.x = e.clientX;
-  mouse.y = e.clientY;
+const pointer = { x: -1000, y: -1000 };
+const waves = [];
+
+window.addEventListener('pointermove', e => {
+  pointer.x = e.clientX;
+  pointer.y = e.clientY;
 });
+window.addEventListener('pointerdown', e => {
+  pointer.x = e.clientX;
+  pointer.y = e.clientY;
+  if (!reduced) waves.push({ x: e.clientX, y: e.clientY, t: performance.now() });
+});
+window.addEventListener('pointerup', e => {
+  if (e.pointerType !== 'mouse') pointer.x = pointer.y = -1000;
+});
+document.addEventListener('mouseleave', () => { pointer.x = pointer.y = -1000; });
 
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+const base = [90, 100, 130];
+const green = [0, 255, 136];
+const blue = [0, 187, 255];
+const mix = (a, b, k) => a.map((v, i) => Math.round(v + (b[i] - v) * k));
+
+function draw(t) {
+  ctx.clearRect(0, 0, w, h);
+
+  while (waves.length && t - waves[0].t > 1800) waves.shift();
 
   for (const dot of dots) {
-    const dx = mouse.x - dot.x;
-    const dy = mouse.y - dot.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const influence = Math.max(0, 1 - dist / 200);
+    const dx = pointer.x - dot.x;
+    const dy = pointer.y - dot.y;
+    const glow = Math.max(0, 1 - Math.sqrt(dx * dx + dy * dy) / 200);
 
-    const r = 0;
-    const g = Math.floor(255 * influence);
-    const b = Math.floor(136 * influence);
-    const alpha = dot.baseAlpha + influence * 0.7;
+    let shock = 0, ox = 0, oy = 0;
+    for (const wv of waves) {
+      const age = (t - wv.t) / 1000;
+      const wx = dot.x - wv.x;
+      const wy = dot.y - wv.y;
+      const d = Math.sqrt(wx * wx + wy * wy) || 1;
+      const ring = d - age * 650;
+      const k = Math.exp(-(ring * ring) / 1800) * Math.max(0, 1 - age / 1.8);
+      shock += k;
+      ox += (wx / d) * k * 8;
+      oy += (wy / d) * k * 8;
+    }
+    shock = Math.min(1, shock);
+
+    const idle = reduced ? 0 : (Math.sin(t * 0.0011 + dot.x * 0.011 + dot.y * 0.007) + 1) * 0.06;
+    const energy = Math.max(glow, shock);
+    const accent = glow + shock > 0 ? mix(green, blue, shock / (glow + shock)) : green;
+    const [r, g, b] = mix(base, accent, energy);
+    const alpha = dot.baseAlpha * 0.45 + idle + energy * 0.7;
+    const size = 2 + energy * 1.5;
 
     ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    ctx.fillRect(dot.x - 1, dot.y - 1, 2, 2);
+    ctx.fillRect(dot.x + ox - size / 2, dot.y + oy - size / 2, size, size);
   }
 
   requestAnimationFrame(draw);
 }
 
-draw();
+requestAnimationFrame(draw);
 </script>
 
 </body>
